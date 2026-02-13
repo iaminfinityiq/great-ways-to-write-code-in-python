@@ -53,7 +53,7 @@ Variable names also have rules in order to support programming languages, these 
 3. Variable names must not match with the keywords list of the language
 
 # Variable declaration
-But the program does not know what values do the variable start with? That's why we have variable declarations, which is a statement
+But the program does not know what values do the variables start with? That's why we have variable declarations, which is a statement
 
 Variable declarations basically just creates a variable and store it with some value. To declare a variable, choose one of the following ways:
 
