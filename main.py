@@ -221,6 +221,7 @@ class Lexer:
 		self.fn = fn
 		self.src = src
 		line = ""
+		self.lines = []
 		for char in self.src:
 			if char == "\n":
 				self.lines += [line]
@@ -234,7 +235,7 @@ class Lexer:
 		self.pos = Position(
 			-1,
 			0,
-			start_line
+			1
 		)
 		self.current_char = None
 		self.advance()
@@ -730,7 +731,7 @@ class Parser:
 			return self.variable_declaration()
 		
 		returned = self.expression()
-		if self.current_token != TokenType.SEMICOLON:
+		if self.current_token.type != TokenType.SEMICOLON:
 			return ParserResult(
 				None,
 				Syntax(
