@@ -1640,9 +1640,9 @@ class Interpreter:
 			)
 		)
 
-print("""----------------------------
-| tyler's language, a REPL |
-----------------------------
+print("""-----------------------------------------
+| tyler's language, a REPL (remastered) |
+-----------------------------------------
 """)
 
 dummy_context = Context(
