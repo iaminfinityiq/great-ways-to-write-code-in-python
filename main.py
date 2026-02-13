@@ -162,8 +162,12 @@ class TokenType(Enum):
 	DIVIDE = auto()
 	LPAREN = auto()
 	RPAREN = auto()
+	EQUALS = auto()
 	INT = auto()
 	FLOAT = auto()
+	IDENTIFIER = auto()
+	LET = auto()
+	CONST = auto()
 
 class Token:
 	def __init__(
@@ -242,6 +246,10 @@ class Lexer:
 	
 	def tokenize(self) -> LexerResult:
 		tokens = []
+		KEYWORDS = {
+			"let": TokenType.LET,
+			"const": TokenType.CONST
+		}
 		while self.current_char != None:
 			if self.current_char in " \t\n":
 				self.advance()
@@ -337,6 +345,21 @@ class Lexer:
 				
 				continue
 			
+			if self.current_char == "=":
+				pos_start = self.pos.copy()
+				self.advance()
+				
+				tokens += [Token(
+					TokenType.EQUALS,
+					")",
+					self.make_context(
+						pos_start,
+						self.pos.copy()
+					)
+				)]
+				
+				continue
+			
 			if self.current_char in "0123456789.":
 				number = ""
 				dot = False
@@ -384,6 +407,34 @@ class Lexer:
 				
 				continue
 			
+			if self.current_char in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_":
+				identifier = ""
+				pos_start = self.pos.copy()
+				while self.current_char != None and self.current_char in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_":
+					identifier += self.current_char
+					self.advance()
+				
+				if identifier in KEYWORDS:
+					tokens += [Token(
+						KEYWORDS[identifier],
+						identifier,
+						self.make_context(
+							pos_start,
+							self.pos.copy()
+						)
+					)]
+					continue
+				
+				tokens += [Token(
+					TokenType.IDENTIFIER,
+					identifier,
+					self.make_context(
+						pos_start,
+						self.pos.copy()
+					)
+				)]
+				continue
+						
 			pos_start = self.pos.copy()
 			char = self.current_char
 			self.advance()
