@@ -55,7 +55,7 @@ Variable names also have rules in order to support programming languages, these 
 # Variable declaration
 But the program does not know what values do the variable start with? That's why we have variable declarations, which is a statement
 
-Variable declarations basically just creates a variable and store it with some value. To deckare the variable, choose one of the following ways:
+Variable declarations basically just creates a variable and store it with some value. To declare a variable, choose one of the following ways:
 
 1. `let <variable_name> = <value>;`: initializes the variable with the value specified
 2. `const <variable_name> = <value>;`: initializes the variable with the value specified, but the variable later can't be changed as the variable now is a **constant**
