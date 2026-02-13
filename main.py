@@ -154,6 +154,18 @@ class Math(Error):
 			context
 		)
 
+class Variable(Error):
+	def __init__(
+		self,
+		details: str,
+		context: Context
+	) -> None:
+		super().__init__(
+			"Variable Error",
+			details,
+			context
+		)
+
 class TokenType(Enum):
 	EOF = auto()
 	PLUS = auto()
@@ -929,6 +941,112 @@ class RuntimeValue:
 					other.context.pos_end
 				)
 			)
+		)
+
+class Scope:
+	def __init__(
+		self,
+		parent: Scope
+	) -> None:
+		self.parent = parent
+		self.variables = {}
+		self.constants = set()
+	
+	def resolve(
+		self,
+		variable_name: str
+	) -> Self | None:
+		if variable_name in self.variables:
+			return self
+		
+		if self.parent:
+			return self.parent.resolve(
+				variable_name
+			)
+		
+		return None
+	
+	def declare(
+		self,
+		variable_name: str,
+		value: RuntimeValue,
+		constant: bool
+		context: Context
+	) -> InterpreterResult:
+		if variable_name in self.variables:
+			return InterpreterResult(
+				None,
+				Variable(
+					f"variable '{variable_name}' is already declared, thus can't be declared again",
+					context
+				)
+			)
+		
+		self.variables[variable_name] = value
+		if constant:
+			self.constants.add(variable_name)
+		
+		return InterpreterResult(
+			None,
+			None
+		)
+	
+	def assign(
+		self,
+		variable_name: str,
+		value: RuntimeValue,
+		context: Context
+	) -> None:
+		scope = self.resolve(
+			variable_name
+		)
+		if not scope:
+			return InterpreterResult(
+				None,
+				Variable(
+					f"variable '{variable_name}' is not declared, thus can't be assigned",
+					context
+				)
+			)
+		
+		if variable_name in scope.constants:
+			return InterpreterResult(
+				None,
+				Variable(
+					f"variable '{variable_name}' is a constant, thus can't be assigned",
+					context
+				)
+			)
+		
+		scope.variables[variable_name] = value
+		value.context = context
+		return InterpreterResult(
+			value,
+			None
+		)
+	
+	def get(
+		self,
+		variable_name: str
+	) -> InterpreterResult:
+		scope = self.resolve(
+			variable_name
+		)
+		if not scope:
+			return InterpreterResult(
+				None,
+				Variable(
+					f"variable '{variable_name}' does not exist",
+					context
+				)
+			)
+		
+		result = scope.variables[variable_name]
+		result.context = context
+		
+		return InterpreterResult(
+			result,
+			None
 		)
 
 class Int(RuntimeValue):
