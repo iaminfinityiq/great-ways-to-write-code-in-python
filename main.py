@@ -467,6 +467,7 @@ class NodeType(Enum):
 	UNARY = auto()
 	INT = auto()
 	FLOAT = auto()
+	IDENTIFIER = auto()
 	PAREN = auto()
 
 class Statement:
@@ -590,6 +591,20 @@ class FloatLiteral(Expression):
 	
 	def __repr__(self) -> str:
 		return str(self.value)
+
+class Identifier(Expression):
+	def __init__(
+		self,
+		symbol: Token
+	) -> None:
+		super().__init__(
+			NodeType.IDENTIFIER,
+			symbol.context
+		)
+		self.symbol = symbol.value
+	
+	def __repr__(self) -> str:
+		return self.symbol
 
 class Paren(Expression):
 	def __init__(
@@ -740,6 +755,17 @@ class Parser:
 			
 			return ParserResult(
 				FloatLiteral(
+					token
+				),
+				None
+			)
+		
+		if self.current_token.type == TokenType.IDENTIFIER:
+			token = self.current_token.copy()
+			self.advance()
+			
+			return ParserResult(
+				Identifier(
 					token
 				),
 				None
