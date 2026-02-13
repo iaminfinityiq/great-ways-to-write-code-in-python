@@ -841,112 +841,86 @@ class RuntimeValue:
 		self.data_type = data_type
 		self.context = context
 	
-	def __add__(
+	def add(
 		self,
-		other: Self
+		other: Self,
+		context: Context
 	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform '+' on '{self.data_type}' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __sub__(
+	def sub(
 		self,
-		other: Self
+		other: Self,
+		context: Context
 	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform '-' on '{self.data_type}' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __mul__(
+	def mul(
 		self,
-		other: Self
+		other: Self,
+		context: Context
 	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform '*' on '{self.data_type}' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __truediv__(
+	def div(
 		self,
-		other: Self
+		other: Self,
+		context: Context
 	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform '/' on '{self.data_type}' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __pos__(self) -> InterpreterResult:
+	def unary_plus(
+		self,
+		context: Context
+	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform 'unary +' on '{self.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 		
-	def __neg__(self) -> InterpreterResult:
+	def unary_minus(
+		self,
+		context: Context
+	) -> InterpreterResult:
 		return InterpreterResult(
 			None,
 			Operator(
 				f"cannot perform 'unary -' on '{self.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 
 class Scope:
 	def __init__(
 		self,
-		parent: Scope
+		parent: Self
 	) -> None:
 		self.parent = parent
 		self.variables = {}
@@ -970,7 +944,7 @@ class Scope:
 		self,
 		variable_name: str,
 		value: RuntimeValue,
-		constant: bool
+		constant: bool,
 		context: Context
 	) -> InterpreterResult:
 		if variable_name in self.variables:
@@ -1027,7 +1001,8 @@ class Scope:
 	
 	def get(
 		self,
-		variable_name: str
+		variable_name: str,
+		context: Context
 	) -> InterpreterResult:
 		scope = self.resolve(
 			variable_name
@@ -1061,21 +1036,16 @@ class Int(RuntimeValue):
 	def __repr__(self) -> str:
 		return str(self.value)
 	
-	def __add__(
+	def add(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type == "int":
 			return InterpreterResult(
 				Int(
 					self.value + other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1084,13 +1054,7 @@ class Int(RuntimeValue):
 			return InterpreterResult(
 				Float(
 					self.value + other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1099,31 +1063,20 @@ class Int(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '+' on 'int' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 
-	def __sub__(
+	def sub(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type == "int":
 			return InterpreterResult(
 				Int(
 					self.value - other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1132,13 +1085,7 @@ class Int(RuntimeValue):
 			return InterpreterResult(
 				Float(
 					self.value - other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1147,31 +1094,20 @@ class Int(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '-' on 'int' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 
-	def __mul__(
+	def mul(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type == "int":
 			return InterpreterResult(
 				Int(
 					self.value * other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1180,13 +1116,7 @@ class Int(RuntimeValue):
 			return InterpreterResult(
 				Float(
 					self.value * other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1195,19 +1125,14 @@ class Int(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '*' on 'int' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 
-	def __truediv__(
+	def div(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type == "int":
 			if other.value == 0:
@@ -1228,13 +1153,7 @@ class Int(RuntimeValue):
 			return InterpreterResult(
 				Int(
 					self.value // other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1245,26 +1164,14 @@ class Int(RuntimeValue):
 					None,
 					Math(
 						"someone here does not know that they can't divide by 0",
-						Context(
-							self.context.fn,
-							self.context.lines,
-							self.context.parent,
-							self.context.pos_start,
-							other.context.pos_end
-						)
+						context
 					)
 				)
 			
 			return InterpreterResult(
 				Float(
 					self.value / other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1273,27 +1180,30 @@ class Int(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '/' on 'int' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __pos__(self) -> InterpreterResult:
+	def unary_plus(
+		self,
+		context: Context
+	) -> InterpreterResult:
 		return InterpreterResult(
-			self,
+			Int(
+				self.value,
+				context
+			),
 			None
 		)
 	
-	def __neg__(self) -> InterpreterResult:
+	def unary_minus(
+		self,
+		context: Context
+	) -> InterpreterResult:
 		return InterpreterResult(
 			Int(
 				-self.value,
-				self.context
+				context
 			),
 			None
 		)
@@ -1310,21 +1220,16 @@ class Float(RuntimeValue):
 	def __repr__(self) -> str:
 		return str(self.value)
 	
-	def __add__(
+	def add(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type in ("int", "float"):
 			return InterpreterResult(
 				Float(
 					self.value + other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1333,31 +1238,20 @@ class Float(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '+' on 'float' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __sub__(
+	def sub(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type in ("int", "float"):
 			return InterpreterResult(
 				Float(
 					self.value - other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1365,32 +1259,21 @@ class Float(RuntimeValue):
 		return InterpreterResult(
 			None,
 			Operator(
-				f"cannot perform '+' on 'float' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				f"cannot perform '-' on 'float' and '{other.data_type}'",
+				context
 			)
 		)
 	
-	def __mul__(
+	def mul(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type in ("int", "float"):
 			return InterpreterResult(
 				Float(
 					self.value * other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					context
 				),
 				None
 			)
@@ -1399,19 +1282,14 @@ class Float(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '*' on 'float' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
 		)
 	
-	def __truediv__(
+	def div(
 		self,
-		other: RuntimeValue
+		other: RuntimeValue,
+		context: Context
 	) -> InterpreterResult:
 		if other.data_type in ("int", "float"):
 			if other.value == 0:
@@ -1419,26 +1297,14 @@ class Float(RuntimeValue):
 					None,
 					Math(
 						"someone here does not know that they can't divide by 0",
-						Context(
-							self.context.fn,
-							self.context.lines,
-							self.context.parent,
-							self.context.pos_start,
-							other.context.pos_end
-						)
+						context
 					)
 				)
 			
 			return InterpreterResult(
 				Float(
-					self.value + other.value,
-					Context(
-						self.context.fn,
-						self.context.lines,
-						self.context.parent,
-						self.context.pos_start,
-						other.context.pos_end
-					)
+					self.value / other.value,
+					context
 				),
 				None
 			)
@@ -1447,14 +1313,32 @@ class Float(RuntimeValue):
 			None,
 			Operator(
 				f"cannot perform '/' on 'float' and '{other.data_type}'",
-				Context(
-					self.context.fn,
-					self.context.lines,
-					self.context.parent,
-					self.context.pos_start,
-					other.context.pos_end
-				)
+				context
 			)
+		)
+	
+	def unary_plus(
+		self,
+		context: Context
+	) -> InterpreterResult:
+		return InterpreterResult(
+			Float(
+				self.value,
+				context
+			),
+			None
+		)
+	
+	def unary_minus(
+		self,
+		context: Context
+	) -> InterpreterResult:
+		return InterpreterResult(
+			Float(
+				-self.value,
+				context
+			),
+			None
 		)
 
 class Null(RuntimeValue):
@@ -1462,7 +1346,7 @@ class Null(RuntimeValue):
 		self,
 		context: Context
 	) -> None:
-		super().__init__("null", context)
+		super().__init__("null_type", context)
 	
 	def __repr__(self) -> str:
 		return "NULL"
@@ -1491,23 +1375,28 @@ class InterpreterResult:
 class Interpreter:
 	def __init__(
 		self,
-		ast: Program
+		ast: Program,
+		global_scope: Scope
 	) -> None:
 		self.ast = ast
+		self.global_scope = global_scope
 	
 	def run(self) -> InterpreterResult:
 		return self.evaluate(
-			self.ast
+			self.ast,
+			self.global_scope
 		)
 	
 	def evaluate(
 		self,
-		node: Statement
+		node: Statement,
+		scope: Scope
 	) -> InterpreterResult:
 		if node.type == NodeType.PROGRAM:
 			for stmt in node.body:
 				result = self.evaluate(
-					stmt
+					stmt,
+					scope
 				)
 				
 				if result.error:
@@ -1523,30 +1412,32 @@ class Interpreter:
 		
 		if node.type == NodeType.BINARY:
 			lhs = self.evaluate(
-				node.lhs
+				node.lhs,
+				scope
 			)
 			
 			if lhs.error:
 				return lhs
 			
 			rhs = self.evaluate(
-				node.rhs
+				node.rhs,
+				scope
 			)
 			
 			if rhs.error:
 				return rhs
 				
 			if node.op == "+":
-				return lhs.result + rhs.result
+				return lhs.result.add(rhs.result, node.context)
 			
 			if node.op == "-":
-				return lhs.result - rhs.result
+				return lhs.result.sub(rhs.result, node.context)
 			
 			if node.op == "*":
-				return lhs.result * rhs.result
+				return lhs.result.mul(rhs.result, node.context)
 			
 			if node.op == "/":
-				return lhs.result / rhs.result
+				return lhs.result.div(rhs.result, node.context)
 			
 			return InterpreterResult(
 				None,
@@ -1576,7 +1467,8 @@ class Interpreter:
 		
 		if node.type == NodeType.PAREN:
 			result = self.evaluate(
-				node.expr
+				node.expr,
+				scope
 			)
 			
 			if result.error:
@@ -1587,27 +1479,18 @@ class Interpreter:
 		
 		if node.type == NodeType.UNARY:
 			value = self.evaluate(
-				node.value
+				node.value,
+				scope
 			)
 			
 			if value.error:
 				return value
 			
 			if node.op == "+":
-				result = +value.result
-				if result.error:
-					return result
-				
-				result.result.context = node.context
-				return result
+				return value.result.unary_plus(node.context)
 			
 			if node.op == "-":
-				result = -value.result
-				if result.error:
-					return result
-				
-				result.result.context = node.context
-				return result
+				return value.result.unary_minus(node.context)
 			
 			return InterpreterResult(
 				None,
@@ -1615,6 +1498,12 @@ class Interpreter:
 					f"unexpected operator: 'unary {node.op}'",
 					node.context
 				)	
+			)
+		
+		if node.type == NodeType.IDENTIFIER:
+			return scope.get(
+				node.symbol,
+				node.context
 			)
 		
 		return InterpreterResult(
@@ -1629,6 +1518,43 @@ print("""----------------------------
 | tyler's language, a REPL |
 ----------------------------
 """)
+
+dummy_context = Context(
+	"",
+	[],
+	None,
+	0,
+	0
+)
+global_scope = Scope(
+	None
+)
+global_scope.declare(
+	"true",
+	Boolean(
+		True,
+		dummy_context
+	),
+	True,
+	dummy_context
+)
+global_scope.declare(
+	"false",
+	Boolean(
+		False,
+		dummy_context
+	),
+	True,
+	dummy_context
+)
+global_scope.declare(
+	"null",
+	Null(
+		dummy_context
+	),
+	True,
+	dummy_context
+)
 while True:
 	code = input("repl > ")
 	
@@ -1652,7 +1578,7 @@ while True:
 	
 	print(f"\nAST:\n{pr.result}\n\nINTERPRETER:")
 	
-	interpreter = Interpreter(pr.result)
+	interpreter = Interpreter(pr.result, global_scope)
 	ir = interpreter.run()
 	if ir.error:
 		print(ir.error)
