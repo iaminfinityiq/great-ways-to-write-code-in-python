@@ -168,6 +168,7 @@ class Variable(Error):
 
 class TokenType(Enum):
 	EOF = auto()
+	SEMICOLON = auto()
 	PLUS = auto()
 	MINUS = auto()
 	MULTIPLY = auto()
@@ -266,7 +267,22 @@ class Lexer:
 			if self.current_char in " \t\n":
 				self.advance()
 				continue
-							
+			
+			if self.current_char == ";":
+				pos_start = self.pos.copy()
+				self.advance()
+				
+				tokens += [Token(
+					TokenType.SEMICOLON,
+					";",
+					self.make_context(
+						pos_start,
+						self.pos.copy()
+					)
+				)]
+				
+				continue
+						
 			if self.current_char == "+":
 				pos_start = self.pos.copy()
 				self.advance()
@@ -475,6 +491,7 @@ class Lexer:
 
 class NodeType(Enum):
 	PROGRAM = auto()
+	VARIABLE_DECLARATION = auto()
 	BINARY = auto()
 	UNARY = auto()
 	INT = auto()
@@ -529,6 +546,30 @@ class Program(Statement):
 			repr += f"{i+1} || {stmt}\n"
 		
 		return repr + "}"
+
+class VariableDeclaration(Statement):
+	def __init__(
+		self,
+		start_token: Token,
+		variable_name: str,
+		value: Expression
+	) -> None:
+		super().__init__(
+			NodeType.VARIABLE_DECLARATION,
+			Context(
+				start_token.context.fn,
+				start_token.context.lines,
+				None,
+				start_token.context.pos_start,
+				value.context.pos_end
+			)
+		)
+		self.constant = start_token.type == TokenType.CONST
+		self.variable_name = variable_name
+		self.value = value
+	
+	def __repr__(self) -> str:
+		return f"{'const' if self.constant else 'let'} {self.variable_name} = {self.value}"
 
 class Binary(Expression):
 	def __init__(
@@ -683,7 +724,75 @@ class Parser:
 		)
 	
 	def statement(self) -> ParserResult:
+		if self.current_token.type in (TokenType.LET, TokenType.CONST):
+			return self.variable_declaration()
+		
 		return self.expression()
+	
+	def variable_declaration(self) -> ParserResult:
+		start_token = self.current_token.copy()
+		self.advance()
+		
+		if self.current_token.type != TokenType.IDENTIFIER:
+			return ParserResult(
+				None,
+				Syntax(
+					"expected variable name in variable declarations",
+					self.current_token.context
+				)
+			)
+		
+		variable_name = self.current_token.value
+		self.advance()
+		
+		if self.current_token.type == TokenType.SEMICOLON:
+			semicolon_context = self.current_token.context
+			self.advance()
+			return ParserResult(
+				VariableDeclaration(
+					start_token,
+					variable_name,
+					Identifier(
+						"null",
+						semicolon_context
+					)
+				),
+				None
+			)
+		
+		if self.current_token.type != TokenType.EQUALS:
+			return ParserResult(
+				None,
+				Syntax(
+					"expected '=' in variable declaration",
+					self.current_token.context
+				)
+			)
+		
+		self.advance()
+		
+		value = self.expression()
+		if value.error:
+			return value
+		
+		if self.current_token.type != TokenType.SEMICOLON:
+			return ParserResult(
+				None,
+				Syntax(
+					"expected ';'",
+					self.current_token.context
+				)
+			)
+		
+		self.advance()
+		return ParserResult(
+			VariableDeclaration(
+				start_token,
+				variable_name,
+				value.result
+			),
+			None
+		)
 	
 	def expression(self) -> ParserResult:
 		return self.additive()
@@ -1408,6 +1517,21 @@ class Interpreter:
 			return InterpreterResult(
 				None,
 				None
+			)
+		
+		if node.type == NodeType.VARIABLE_DECLARATION:
+			value = self.evaluate(
+				node.value,
+				scope
+			)
+			if value.error:
+				return value
+			
+			return scope.declare(
+				node.variable_name,
+				value.result,
+				node.constant,
+				node.context
 			)
 		
 		if node.type == NodeType.BINARY:
