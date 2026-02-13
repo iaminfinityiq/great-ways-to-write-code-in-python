@@ -705,6 +705,9 @@ class Parser:
 	def parse(self) -> ParserResult:
 		body = []
 		while self.current_token.type not in (TokenType.EOF, None):
+			while self.current_token.type == TokenType.SEMICOLON:
+				self.advance()
+			
 			stmt = self.statement()
 			if stmt.error:
 				return stmt
@@ -726,7 +729,18 @@ class Parser:
 		if self.current_token.type in (TokenType.LET, TokenType.CONST):
 			return self.variable_declaration()
 		
-		return self.expression()
+		returned = self.expression()
+		if self.current_token != TokenType.SEMICOLON:
+			return ParserResult(
+				None,
+				Syntax(
+					"expected ';'",
+					self.current_token.context
+				)
+			)
+		
+		self.advance()
+		return returned
 	
 	def variable_declaration(self) -> ParserResult:
 		start_token = self.current_token.copy()
