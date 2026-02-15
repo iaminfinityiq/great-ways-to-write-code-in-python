@@ -379,7 +379,7 @@ class Lexer:
 				
 				tokens += [Token(
 					TokenType.EQUALS,
-					")",
+					"=",
 					self.make_context(
 						pos_start,
 						self.pos.copy()
@@ -492,6 +492,7 @@ class Lexer:
 class NodeType(Enum):
 	PROGRAM = auto()
 	VARIABLE_DECLARATION = auto()
+	ASSIGNMENT = auto()
 	BINARY = auto()
 	UNARY = auto()
 	INT = auto()
@@ -570,6 +571,30 @@ class VariableDeclaration(Statement):
 	
 	def __repr__(self) -> str:
 		return f"{'const' if self.constant else 'let'} {self.variable_name} = {self.value}"
+
+class Assignment(Expression):
+	def __init__(
+		self,
+		assigner: Expression,
+		op: Token,
+		value: Expression
+	) -> None:
+		super().__init__(
+			NodeType.ASSIGNMENT,
+			Context(
+				assigner.context.fn,
+				assigner.context.lines,
+				None,
+				assigner.context.pos_start,
+				value.context.pos_end
+			)
+		)
+		self.assigner = assigner
+		self.op = op.value
+		self.value = value
+	
+	def __repr__(self) -> str:
+		return f"({self.assigner} {self.op} {self.value})"
 
 class Binary(Expression):
 	def __init__(
@@ -731,6 +756,9 @@ class Parser:
 			return self.variable_declaration()
 		
 		returned = self.expression()
+		if returned.error:
+			return returned
+		
 		if self.current_token.type != TokenType.SEMICOLON:
 			return ParserResult(
 				None,
@@ -812,7 +840,37 @@ class Parser:
 		)
 	
 	def expression(self) -> ParserResult:
-		return self.additive()
+		return self.assignment()
+	
+	def assignment(self) -> ParserResult:
+		assigner = self.additive()
+		if assigner.error or self.current_token.type not in (TokenType.EQUALS,):
+			return assigner
+		
+		if assigner.result.type not in (NodeType.IDENTIFIER,):
+			return ParserResult(
+				None,
+				Syntax(
+					"invalid syntax",
+					assigner.result.context
+				)
+			)
+		
+		op = self.current_token.copy()
+		self.advance()
+		
+		value = self.expression()
+		if value.error:
+			return value
+		
+		return ParserResult(
+			Assignment(
+				assigner.result,
+				op,
+				value.result
+			),
+			None
+		)
 	
 	def additive(self) -> ParserResult:
 		lhs = self.multiplicative()
@@ -1549,6 +1607,38 @@ class Interpreter:
 				value.result,
 				node.constant,
 				node.context
+			)
+		
+		if node.type == NodeType.ASSIGNMENT:
+			if node.assigner.type == NodeType.IDENTIFIER:
+				variable_name = node.assigner.symbol
+				value = self.evaluate(
+					node.value,
+					scope
+				)
+				if value.error:
+					return value
+				
+				if node.op == "=":
+					return scope.assign(
+						variable_name,
+						value.result,
+						node.context
+					)
+				
+				return InterpreterResult(
+					None,
+					UnfinishedInterpreter(
+						f"unexpected operator: '{node.op}'"
+					)
+				)
+			
+			return InterpreterResult(
+				None,
+				Syntax(
+					"invalid syntax",
+					assigner.result.context
+				)
 			)
 		
 		if node.type == NodeType.BINARY:
